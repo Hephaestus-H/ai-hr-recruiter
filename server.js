@@ -10,7 +10,11 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // DeepSeek API 配置（从环境变量读取，不在代码里暴露 Key）
-const DEEPSEEK_API_KEY = (process.env.DEEPSEEK_API_KEY || '').trim();
+// 只保留可见 ASCII 字符，过滤掉换行符、BOM 等不可见字符
+const DEEPSEEK_API_KEY = (process.env.DEEPSEEK_API_KEY || '')
+  .replace(/[^\x20-\x7E]/g, '')
+  .trim();
+
 const DEEPSEEK_API_URL = 'https://api.deepseek.com/chat/completions';
 
 // 启动时检查 Key 是否配置
