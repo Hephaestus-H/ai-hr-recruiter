@@ -29,7 +29,7 @@ async function callDeepSeek(systemPrompt, userMessage) {
   const response = await fetch(DEEPSEEK_API_URL, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json; charset=utf-8',
+      'Content-Type': 'application/json',
       'Authorization': `Bearer ${DEEPSEEK_API_KEY}`
     },
     body: JSON.stringify({
