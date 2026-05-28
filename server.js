@@ -10,7 +10,8 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
-const DEEPSEEK_API_URL = 'https://api.deepseek.com/chat/completions';
+const DEEPSEEK_API_KEY = (process.env.DEEPSEEK_API_KEY || '').trim();
+
 
 if (!DEEPSEEK_API_KEY) {
   console.error('ERROR: DEEPSEEK_API_KEY not found in .env');
