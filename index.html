@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 招聘助手 — 简历解析 · JD撰写 · 面试题库</title>
+    <style>
+        :root {
+            --primary: #4F46E5;
+            --primary-light: #EEF2FF;
+            --success: #059669;
+            --warning: #D97706;
+            --bg: #F8FAFC;
+            --card: #FFFFFF;
+            --border: #E2E8F0;
+            --text: #1E293B;
+            --text-secondary: #64748B;
+            --text-muted: #94A3B8;
+            --shadow: 0 1px 3px rgba(0,0,0,0.08);
+            --radius: 12px;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+            background: var(--bg); color: var(--text); line-height: 1.6; min-height: 100vh;
+        }
+
+        /* 头部 */
+        .header {
+            background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
+            padding: 28px 40px; color: #fff;
+        }
+        .header-inner { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
+        .logo { display: flex; align-items: center; gap: 12px; }
+        .logo-icon { width: 44px; height: 44px; background: rgba(255,255,255,0.2); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+        .logo-text h1 { font-size: 22px; font-weight: 700; }
+        .logo-text span { font-size: 13px; opacity: 0.8; }
+        .header-badge { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); border-radius: 20px; padding: 6px 16px; font-size: 13px; }
+
+        /* 标签导航 */
+        .tabs { max-width: 1200px; margin: -1px auto 0; display: flex; gap: 0; padding: 0 40px; }
+        .tab {
+            padding: 14px 22px; font-size: 14px; font-weight: 500; cursor: pointer;
+            color: var(--text-secondary); background: var(--card);
+            border: 1px solid var(--border); border-radius: 10px 10px 0 0;
+            margin-right: 2px; transition: all 0.2s; position: relative;
+        }
+        .tab:hover:not(.active):not(.disabled) { color: var(--primary); }
+        .tab.active { color: var(--primary); background: var(--bg); border-bottom-color: var(--bg); font-weight: 600; }
+        .tab.disabled { color: var(--text-muted); cursor: not-allowed; opacity: 0.6; }
+        .tab .badge { font-size: 11px; padding: 2px 8px; border-radius: 10px; margin-left: 6px; }
+        .tab .badge-done { background: #ECFDF5; color: #059669; }
+        .tab .badge-soon { background: #F1F5F9; color: #94A3B8; }
+
+        /* 主区域 */
+        .main { max-width: 1200px; margin: 0 auto; padding: 24px 40px 60px; }
+
+        /* 双栏布局 */
+        .work-area { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; min-height: 500px; }
+        .full-area { display: grid; grid-template-columns: 1fr; gap: 24px; }
+
+        /* 卡片 */
+        .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow); }
+        .card-title { font-size: 15px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+        .card-title .icon { font-size: 18px; }
+
+        /* 输入区 */
+        .input-group { margin-bottom: 16px; }
+        .input-group label { display: block; font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
+        .input-group textarea, .input-group input, .input-group select {
+            width: 100%; padding: 14px; border: 1.5px solid var(--border); border-radius: 8px;
+            font-size: 13px; line-height: 1.7; transition: border-color 0.2s; font-family: inherit;
+            color: var(--text); background: #FAFBFC;
+        }
+        .input-group textarea { min-height: 140px; resize: vertical; }
+        .input-group textarea:focus, .input-group input:focus, .input-group select:focus {
+            outline: none; border-color: var(--primary); background: #fff; box-shadow: 0 0 0 3px rgba(79,70,229,0.1);
+        }
+        .char-count { text-align: right; font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+
+        .btn {
+            display: inline-flex; align-items: center; gap: 8px; padding: 12px 28px;
+            font-size: 14px; font-weight: 600; border: none; border-radius: 8px; cursor: pointer; transition: all 0.2s;
+        }
+        .btn-primary { background: var(--primary); color: #fff; width: 100%; justify-content: center; }
+        .btn-primary:hover { background: #4338CA; transform: translateY(-1px); box-shadow: 0 10px 25px rgba(0,0,0,0.08); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .btn-outline { background: #fff; color: var(--primary); border: 1.5px solid var(--primary); }
+        .btn-outline:hover { background: var(--primary-light); }
+        .btn-sm { padding: 8px 18px; font-size: 13px; }
+        .btn-group { display: flex; gap: 10px; margin-top: 16px; }
+
+        /* 结果区 */
+        .result-placeholder { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+        .result-placeholder .icon { font-size: 48px; margin-bottom: 12px; opacity: 0.4; }
+        .result-placeholder p { font-size: 14px; }
+
+        .score-section { display: flex; align-items: center; gap: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+        .score-ring { width: 100px; height: 100px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 800; flex-shrink: 0; }
+        .match-summary { flex: 1; }
+        .match-summary h3 { font-size: 16px; margin-bottom: 4px; }
+        .match-summary p { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+
+        .report-section { margin-bottom: 20px; }
+        .report-section h4 { font-size: 13px; color: var(--text-secondary); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+        .tag-list { display: flex; flex-wrap: wrap; gap: 6px; }
+        .tag { padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 500; }
+        .tag-skill { background: #EEF2FF; color: #4F46E5; }
+        .tag-match { background: #ECFDF5; color: #059669; }
+        .tag-gap { background: #FEF3C7; color: #B45309; }
+        .tag-info { background: #F1F5F9; color: #475569; }
+
+        .insight-item {
+            padding: 10px 14px; background: #F8FAFC; border-radius: 8px; margin-bottom: 8px;
+            font-size: 13px; line-height: 1.6; border-left: 3px solid var(--primary);
+        }
+        .insight-item.good { border-left-color: var(--success); }
+        .insight-item.warn { border-left-color: var(--warning); }
+
+        /* JD 模块特有样式 */
+        .jd-preview {
+            background: #fff; border: 1px solid var(--border); border-radius: var(--radius);
+            padding: 28px; line-height: 2;
+        }
+        .jd-preview h2 { font-size: 20px; color: var(--text); margin-bottom: 8px; }
+        .jd-preview .jd-meta { color: var(--text-muted); font-size: 13px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+        .jd-preview h3 { font-size: 15px; color: var(--primary); margin: 20px 0 10px; }
+        .jd-preview ul { padding-left: 20px; }
+        .jd-preview li { font-size: 13px; color: var(--text-secondary); margin-bottom: 6px; }
+
+        /* 面试题库特有样式 */
+        .question-card {
+            background: #fff; border: 1px solid var(--border); border-radius: var(--radius);
+            padding: 16px 20px; margin-bottom: 12px; border-left: 4px solid var(--primary);
+        }
+        .question-card.behavioral { border-left-color: #4F46E5; }
+        .question-card.professional { border-left-color: #059669; }
+        .question-card.situational { border-left-color: #D97706; }
+        .question-card .q-title { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+        .question-card .q-detail { font-size: 12px; color: var(--text-secondary); line-height: 1.6; }
+        .question-card .q-type {
+            display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 4px; margin-bottom: 8px;
+        }
+        .q-type-behavioral { background: #EEF2FF; color: #4F46E5; }
+        .q-type-professional { background: #ECFDF5; color: #059669; }
+        .q-type-situational { background: #FEF3C7; color: #B45309; }
+
+        /* 分析中动画 */
+        .analyzing { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; }
+        .spinner { width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 16px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .notice { padding: 14px 18px; background: #FFF7ED; border: 1px solid #FED7AA; border-radius: 8px; font-size: 13px; color: #C2410C; line-height: 1.6; margin-top: 24px; }
+
+        /* 快捷模板按钮 */
+        .template-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+        .chip {
+            padding: 6px 14px; border: 1px solid var(--border); border-radius: 20px; font-size: 12px;
+            cursor: pointer; background: #fff; color: var(--text-secondary); transition: all 0.2s;
+        }
+        .chip:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
+
+        /* AI 输出内容样式 */
+        .ai-output { line-height: 1.8; color: var(--text-main); }
+        .ai-output h2 { font-size: 20px; margin: 24px 0 12px; color: #1E293B; }
+        .ai-output h3 { font-size: 17px; margin: 20px 0 10px; color: #1E293B; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
+        .ai-output h4 { font-size: 15px; margin: 16px 0 8px; color: #4F46E5; }
+        .ai-output h5 { font-size: 14px; margin: 12px 0 6px; }
+        .ai-output ul { padding-left: 20px; margin: 8px 0; }
+        .ai-output li { margin: 4px 0; }
+        .ai-output strong { color: #1E293B; }
+        .ai-output p { margin: 8px 0; }
+        .error-msg { padding: 16px; background: #FEF2F2; border: 1px solid #FECACA; border-radius: 8px; color: #DC2626; font-size: 14px; line-height: 1.6; }
+        .error-msg small { color: #9CA3AF; }
+
+        @media (max-width: 900px) {
+            .work-area { grid-template-columns: 1fr; }
+            .header-inner { flex-direction: column; text-align: center; gap: 12px; }
+            .tabs { overflow-x: auto; }
+        }
+    </style>
+</head>
+<body>
+
+<header class="header">
+    <div class="header-inner">
+        <div class="logo">
+            <div class="logo-icon">🤖</div>
+            <div class="logo-text"><h1>AI 招聘助手</h1><span>Powered by Prompt Engineering</span></div>
+        </div>
+        <div class="header-badge">🚀 AI-HR 实训项目（HSY）</div>
+    </div>
+</header>
+
+<nav class="tabs">
+    <div class="tab active" onclick="switchTab('resume')">简历匹配 <span class="badge badge-done">✓</span></div>
+    <div class="tab" onclick="switchTab('jd')">JD撰写 <span class="badge badge-done">✓</span></div>
+    <div class="tab" onclick="switchTab('interview')">面试题库 <span class="badge badge-done">✓</span></div>
+    <div class="tab disabled">对比报告 <span class="badge badge-soon">即将上线</span></div>
+</nav>
+
+<main class="main">
+
+<!-- ==================== 模块一：简历匹配 ==================== -->
+<div id="panel-resume" class="tab-panel">
+<div class="work-area">
+    <div>
+        <div class="card">
+            <div class="card-title"><span class="icon">📋</span> 简历 & 岗位输入</div>
+            <div class="input-group">
+                <label>📄 粘贴简历内容</label>
+                <textarea id="resumeInput" placeholder="在此粘贴候选人的简历内容..."></textarea>
+                <div class="char-count"><span id="resumeCount">0</span> 字</div>
+            </div>
+            <div class="input-group">
+                <label>📌 粘贴岗位 JD</label>
+                <textarea id="jdInput" placeholder="在此粘贴岗位的 JD 描述..."></textarea>
+                <div class="char-count"><span id="jdCount">0</span> 字</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-outline btn-sm" onclick="loadResumeSample()" style="flex:1">📥 载入示例</button>
+                <button class="btn btn-primary" onclick="runResumeAnalysis()" id="resumeBtn" style="flex:2">🔍 开始 AI 分析</button>
+            </div>
+        </div>
+    </div>
+    <div>
+        <div class="card"><div class="card-title"><span class="icon">📊</span> 匹配分析报告</div><div id="resumeResult"></div></div>
+    </div>
+</div>
+</div>
+
+<!-- ==================== 模块二：JD 撰写 ==================== -->
+<div id="panel-jd" class="tab-panel" style="display:none;">
+<div class="work-area">
+    <div>
+        <div class="card">
+            <div class="card-title"><span class="icon">✍️</span> JD 生成参数</div>
+            <div class="input-group">
+                <label>🎯 岗位名称</label>
+                <input type="text" id="jdTitle" placeholder="例如：HR 实习生（招聘方向）">
+            </div>
+            <div class="input-group">
+                <label>📍 工作地点</label>
+                <input type="text" id="jdLocation" placeholder="例如：北京">
+            </div>
+            <div class="input-group">
+                <label>🏢 部门/业务线</label>
+                <input type="text" id="jdDept" placeholder="例如：人力资源部">
+            </div>
+            <div class="input-group">
+                <label>📝 岗位核心职责（用换行分隔多条）</label>
+                <textarea id="jdDuties" placeholder="例如：
+协助完成各业务线招聘需求
+维护和拓展招聘渠道
+参与校园招聘活动策划与执行"></textarea>
+            </div>
+            <div class="input-group">
+                <label>🎓 任职要求（用换行分隔多条）</label>
+                <textarea id="jdReqs" placeholder="例如：
+本科及以上学历
+熟练使用 Office 办公软件
+良好的沟通能力"></textarea>
+            </div>
+            <div class="input-group">
+                <label>⭐ 加分项（可选）</label>
+                <textarea id="jdBonus" placeholder="例如：
+有互联网公司实习经验
+熟悉 Boss 直聘等招聘平台" style="min-height:80px;"></textarea>
+            </div>
+
+            <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">💡 快捷模板：</div>
+            <div class="template-chips">
+                <span class="chip" onclick="loadJdTemplate('hr')">HR 实习</span>
+                <span class="chip" onclick="loadJdTemplate('pm')">产品实习</span>
+                <span class="chip" onclick="loadJdTemplate('dev')">开发实习</span>
+                <span class="chip" onclick="loadJdTemplate('market')">市场实习</span>
+            </div>
+
+            <button class="btn btn-primary" onclick="runJdGenerate()" id="jdBtn" style="margin-top:16px;">✨ 生成规范 JD</button>
+        </div>
+    </div>
+    <div>
+        <div class="card"><div class="card-title"><span class="icon">📄</span> 生成的 JD</div><div id="jdResult"></div></div>
+    </div>
+</div>
+</div>
+
+<!-- ==================== 模块三：面试题库 ==================== -->
+<div id="panel-interview" class="tab-panel" style="display:none;">
+<div class="work-area">
+    <div>
+        <div class="card">
+            <div class="card-title"><span class="icon">🎤</span> 面试题库生成器</div>
+            <div class="input-group">
+                <label>🎯 目标岗位</label>
+                <input type="text" id="ivPosition" placeholder="例如：HR 实习生（招聘方向）">
+            </div>
+            <div class="input-group">
+                <label>📊 候选人级别</label>
+                <select id="ivLevel">
+                    <option value="intern">实习生 / 应届生</option>
+                    <option value="junior">初级（1-3 年）</option>
+                    <option value="mid">中级（3-5 年）</option>
+                    <option value="senior">高级（5+ 年）</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>🔑 岗位核心能力（用逗号分隔）</label>
+                <input type="text" id="ivSkills" placeholder="例如：沟通能力,数据分析,招聘流程,团队协作">
+            </div>
+            <div class="input-group">
+                <label>📝 补充要求（可选，描述你想考察的重点）</label>
+                <textarea id="ivExtra" placeholder="例如：希望重点考察候选人对互联网招聘的理解，以及面对高压工作的应对方式" style="min-height:80px;"></textarea>
+            </div>
+            <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">💡 快捷模板：</div>
+            <div class="template-chips">
+                <span class="chip" onclick="loadIvTemplate('hr')">HR 实习生</span>
+                <span class="chip" onclick="loadIvTemplate('pm')">产品助理</span>
+                <span class="chip" onclick="loadIvTemplate('ops')">运营专员</span>
+            </div>
+            <button class="btn btn-primary" onclick="runInterviewGenerate()" id="ivBtn" style="margin-top:16px;">🎯 生成面试题库</button>
+        </div>
+    </div>
+    <div>
+        <div class="card"><div class="card-title"><span class="icon">📋</span> 面试题库</div><div id="ivResult"></div></div>
+    </div>
+</div>
+</div>
+
+</main>
+
+
+<script>
+// ============================================================
+// 全局：标签切换
+// ============================================================
+function switchTab(name) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.style.display = 'none');
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('panel-' + name).style.display = 'block';
+    // 找到对应tab并激活
+    const tabs = document.querySelectorAll('.tab:not(.disabled)');
+    const map = { resume: 0, jd: 1, interview: 2 };
+    if (map[name] !== undefined) tabs[map[name]].classList.add('active');
+}
+
+// ============================================================
+// 模块一：简历匹配
+// ============================================================
+const sampleResume = `张明远
+个人简介：大连理工大学工商管理专业 2026 届毕业生，GPA 3.6/4.0，在校期间担任学生会人力资源部部长。性格开朗，善于沟通协调，对 HR 领域有浓厚兴趣。
+
+教育背景：
+2022.09 - 2026.06  大连理工大学  工商管理  本科
+主修课程：公共管理学、组织行为学、人力资源开发与管理、社会调查方法
+
+实习经历：
+2025.07 - 2025.09  美团  招聘实习生
+- 协助完成 30+ 岗位的简历筛选与初步电话沟通
+- 参与面试流程协调，跟进候选人反馈
+- 使用飞书多维表格进行招聘数据统计与分析
+
+2024.12 - 2025.03  武汉某文化传媒公司  行政实习生
+- 负责日常文档整理与会议纪要撰写
+- 协助组织内部培训活动
+
+技能：
+- 办公软件：Excel（VLOOKUP、透视表）、PPT、Word
+- 工具：飞书、钉钉、ChatGPT、Notion
+- 数据分析：SPSS 基础、Python 基础
+- 语言：英语 CET-6（568分）`;
+
+const sampleJD = `【岗位名称】HR 实习生（招聘方向）
+【工作地点】北京
+
+【岗位职责】
+1. 协助完成各业务线的招聘需求，包括简历筛选、电话邀约、面试安排
+2. 维护和拓展招聘渠道，参与招聘数据统计与分析
+3. 协助策划和执行校园招聘活动
+4. 参与雇主品牌建设相关工作
+
+【任职要求】
+1. 本科及以上学历，人力资源管理、心理学、管理学等相关专业优先
+2. 熟练使用 Office 办公软件，具备基本的数据分析能力
+3. 良好的沟通能力和团队协作精神
+4. 每周至少实习 4 天，可连续实习 3 个月以上
+5. 有互联网公司或招聘相关实习经验者优先
+6. 熟悉主流招聘平台（Boss直聘、猎聘等）者加分`;
+
+document.getElementById('resumeInput').addEventListener('input', function() {
+    document.getElementById('resumeCount').textContent = this.value.length;
+});
+document.getElementById('jdInput').addEventListener('input', function() {
+    document.getElementById('jdCount').textContent = this.value.length;
+});
+
+function loadResumeSample() {
+    document.getElementById('resumeInput').value = sampleResume;
+    document.getElementById('jdInput').value = sampleJD;
+    document.getElementById('resumeCount').textContent = sampleResume.length;
+    document.getElementById('jdCount').textContent = sampleJD.length;
+}
+
+// ============================================================
+// 后端 API 统一调用（Key 在服务器端，前端不再持有 Key）
+// ============================================================
+
+// 自动判断后端地址：本地开发用 localhost:3000，部署后用同域
+const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:3000'
+    : '';  // 部署后前后端同域，用相对路径即可
+
+async function runResumeAnalysis() {
+    const resume = document.getElementById('resumeInput').value.trim();
+    const jd = document.getElementById('jdInput').value.trim();
+    if (!resume || !jd) { alert('请同时填写简历和 JD 内容！'); return; }
+
+    const result = document.getElementById('resumeResult');
+    const btn = document.getElementById('resumeBtn');
+    result.innerHTML = '<div class="analyzing"><div class="spinner"></div><p>AI 正在分析中，约需 10-30 秒...</p></div>';
+    btn.disabled = true; btn.textContent = '⏳ 分析中...';
+
+    try {
+        // 调用后端接口，由后端持有 API Key 并转发给 DeepSeek
+        const resp = await fetch(API_BASE + '/api/resume-analyze', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ resume, jd })
+        });
+        if (!resp.ok) {
+            const errData = await resp.json().catch(() => ({}));
+            throw new Error(errData.error || 'HTTP ' + resp.status);
+        }
+        const data = await resp.json();
+        const aiResult = data.result;
+        result.innerHTML = markdownToHTML(aiResult);
+    } catch (err) {
+        result.innerHTML = `<div class="error-msg">❌ 分析失败：${err.message}<br><small>请确认 API Key 余额充足，或稍后重试</small></div>`;
+    } finally {
+        btn.disabled = false; btn.textContent = '🔍 重新分析';
+    }
+}
+
+// ============================================================
+// 模块二：JD 撰写
+// ============================================================
+const jdTemplates = {
+    hr: { title:'HR 实习生（招聘方向）', location:'北京', dept:'人力资源部',
+        duties:'协助完成各业务线招聘需求\n维护和拓展招聘渠道，进行数据统计分析\n协助校园招聘活动的策划与执行\n参与雇主品牌建设、JD优化等工作',
+        reqs:'本科及以上学历，人力资源/管理类优先\n熟练使用Office办公软件\n良好的沟通协调和团队协作能力\n每周可实习4天以上，持续3个月以上',
+        bonus:'有互联网公司实习经验\n熟悉Boss直聘、猎聘等平台' },
+    pm: { title:'产品助理实习生', location:'上海', dept:'产品部',
+        duties:'协助产品经理进行需求分析和文档撰写\n参与产品功能测试与用户反馈收集\n协助竞品调研和市场分析\n跟踪产品数据，输出分析报告',
+        reqs:'本科及以上学历，计算机/设计/管理类优先\n逻辑清晰，有较强的文档能力\n对互联网产品有热情\n会使用Axure/Figma等原型工具优先',
+        bonus:'有产品实习经验\n了解数据分析工具(SQL/Excel)' },
+    dev: { title:'前端开发实习生', location:'深圳', dept:'技术部',
+        duties:'参与公司业务系统的前端功能开发\n配合后端完成接口联调和功能实现\n参与前端组件库的维护和优化\n编写技术文档',
+        reqs:'本科及以上，计算机相关专业\n熟悉HTML/CSS/JavaScript\n了解一种前端框架(Vue/React)\n有Git使用经验',
+        bonus:'有个人技术博客或开源项目\n了解TypeScript' },
+    market: { title:'市场营销实习生', location:'广州', dept:'市场部',
+        duties:'协助品牌营销活动的策划与执行\n参与社交媒体内容运营和数据分析\n协助市场调研和竞品分析报告\n跟进合作渠道的日常沟通',
+        reqs:'本科及以上，市场营销/传媒类优先\n文案能力强，有新媒体运营经验\n熟练使用PS/Canva等设计工具\n具备基本数据分析能力',
+        bonus:'有短视频制作经验\n了解SEO/SEM基础' }
+};
+
+function loadJdTemplate(type) {
+    const t = jdTemplates[type];
+    document.getElementById('jdTitle').value = t.title;
+    document.getElementById('jdLocation').value = t.location;
+    document.getElementById('jdDept').value = t.dept;
+    document.getElementById('jdDuties').value = t.duties;
+    document.getElementById('jdReqs').value = t.reqs;
+    document.getElementById('jdBonus').value = t.bonus;
+}
+
+async function runJdGenerate() {
+    const position = document.getElementById('jdTitle').value.trim();
+    const location = document.getElementById('jdLocation').value.trim();
+    if (!position) { alert('请至少填写岗位名称！'); return; }
+
+    const department = document.getElementById('jdDept').value.trim();
+    const responsibilities = document.getElementById('jdDuties').value.trim();
+    const requirements = document.getElementById('jdReqs').value.trim();
+    const bonus = document.getElementById('jdBonus').value.trim();
+
+    const btn = document.getElementById('jdBtn');
+    const result = document.getElementById('jdResult');
+    result.innerHTML = '<div class="analyzing"><div class="spinner"></div><p>AI 正在生成 JD，约需 10-20 秒...</p></div>';
+    btn.disabled = true; btn.textContent = '⏳ 生成中...';
+
+    try {
+        // 调用后端接口生成 JD
+        const resp = await fetch(API_BASE + '/api/jd-generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ position, location, department, responsibilities, requirements, bonus })
+        });
+        if (!resp.ok) {
+            const errData = await resp.json().catch(() => ({}));
+            throw new Error(errData.error || 'HTTP ' + resp.status);
+        }
+        const data = await resp.json();
+        const aiResult = data.result;
+        result.innerHTML = markdownToHTML(aiResult);
+    } catch (err) {
+        result.innerHTML = `<div class="error-msg">❌ 生成失败：${err.message}<br><small>请确认 API Key 余额充足，或稍后重试</small></div>`;
+    } finally {
+        btn.disabled = false; btn.textContent = '✨ 重新生成';
+    }
+}
+
+// ============================================================
+// 模块三：面试题库
+// ============================================================
+const ivTemplates = {
+    hr: { position:'HR 实习生（招聘方向）', skills:'沟通能力,招聘流程,数据分析,抗压能力,团队协作',
+        extra:'重点考察候选人对互联网招聘的理解，以及处理高压工作的能力' },
+    pm: { position:'产品助理实习生', skills:'逻辑思维,用户洞察,数据分析,文档能力,跨部门沟通',
+        extra:'考察候选人的产品 sense 和逻辑表达能力' },
+    ops: { position:'内容运营专员', skills:'文案能力,数据分析,热点追踪,用户心理,工具使用',
+        extra:'考察候选人对主流内容平台的了解和爆款内容的判断力' }
+};
+
+function loadIvTemplate(type) {
+    const t = ivTemplates[type];
+    document.getElementById('ivPosition').value = t.position;
+    document.getElementById('ivSkills').value = t.skills;
+    document.getElementById('ivExtra').value = t.extra;
+}
+
+async function runInterviewGenerate() {
+    const position = document.getElementById('ivPosition').value.trim();
+    if (!position) { alert('请填写目标岗位！'); return; }
+
+    const level = document.getElementById('ivLevel').value;
+    const abilities = document.getElementById('ivSkills').value.trim();
+    const extra = document.getElementById('ivExtra').value.trim();
+    const btn = document.getElementById('ivBtn');
+    const result = document.getElementById('ivResult');
+
+    result.innerHTML = '<div class="analyzing"><div class="spinner"></div><p>AI 正在生成面试题库，约需 15-30 秒...</p></div>';
+    btn.disabled = true; btn.textContent = '⏳ 生成中...';
+
+    try {
+        // 调用后端接口生成面试题库
+        const resp = await fetch(API_BASE + '/api/interview-questions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ position, level, abilities, extra })
+        });
+        if (!resp.ok) {
+            const errData = await resp.json().catch(() => ({}));
+            throw new Error(errData.error || 'HTTP ' + resp.status);
+        }
+        const data = await resp.json();
+        const aiResult = data.result;
+        result.innerHTML = markdownToHTML(aiResult);
+    } catch (err) {
+        result.innerHTML = `<div class="error-msg">❌ 生成失败：${err.message}<br><small>请确认 API Key 余额充足，或稍后重试</small></div>`;
+    } finally {
+        btn.disabled = false; btn.textContent = '🎯 重新生成';
+    }
+}
+// ============================================================
+// 简单 Markdown → HTML 渲染
+// ============================================================
+function markdownToHTML(md) {
+    if (!md) return '<p>暂无内容</p>';
+    // 安全转义 HTML
+    let html = md
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        // 标题
+        .replace(/^#### (.+)$/gm, '<h5>$1</h5>')
+        .replace(/^### (.+)$/gm, '<h4>$1</h4>')
+        .replace(/^## (.+)$/gm, '<h3>$1</h3>')
+        .replace(/^# (.+)$/gm, '<h2>$1</h2>')
+        // 粗体和斜体
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.+?)\*/g, '<em>$1</em>')
+        // 无序列表
+        .replace(/^- (.+)$/gm, '<li>$1</li>')
+        // 有序列表
+        .replace(/^\d+\. (.+)$/gm, '<li>$1</li>')
+        // 换行
+        .replace(/\n\n/g, '</p><p>')
+        .replace(/\n/g, '<br>');
+
+    // 包裹 <li> 序列
+    html = html.replace(/((?:<li>.*?<\/li><br>)+)/g, (match) => {
+        return '<ul>' + match.replace(/<br>/g, '') + '</ul>';
+    });
+
+    html = '<p>' + html + '</p>';
+    // 清理空的 <p></p>
+    html = html.replace(/<p><\/p>/g, '');
+    // 把孤立的 <li> 再包一次
+    html = html.replace(/(<li>.*?<\/li>)+/g, (match) => {
+        if (!match.startsWith('<ul>')) return '<ul>' + match + '</ul>';
+        return match;
+    });
+
+    return '<div class="ai-output">' + html + '</div>';
+}
+
+</script>
+
+</body>
+</html>
